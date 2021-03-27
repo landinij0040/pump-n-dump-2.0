@@ -2,7 +2,7 @@
 # pump.py  Nigel Ward, 2021.  Based on John Osterhout's Producer/Consumer code.
 
 
-import sys, threading, time
+import sys, threading, time, asyncio
 
 global count, putIndex,  getIndex, cbuffer, bufLock
 
@@ -17,17 +17,22 @@ def pumpProducer():
 
 def putChar(character):
     global count, putIndex, bufLock
-    bufLock.acquire()
-    while count >= bufsize:
-        #print("waiting to send", end="")
-        bufLock.release()
-        bufLock.acquire()
+    # bufLock.acquire() # TODO: I dont think I need this
+    
+    
+    # TODO: I don't think I need this
+    # while count >= bufsize:
+    #     #print("waiting to send", end="")
+    #     bufLock.release()
+    #     bufLock.acquire()
+    
+    
     count += 1
     cbuffer[putIndex] = character
     putIndex += 1
     if putIndex == bufsize:
         putIndex = 0
-    bufLock.release()
+    # bufLock.release() # TODO: I don't I need this
 
 
 def pumpConsumer():
@@ -42,17 +47,17 @@ def pumpConsumer():
 
 def getChar():
     global count, getIndex, bufLock
-    bufLock.acquire()
+    # bufLock.acquire()# TODO: I don't I need this
     while (count == 0):
         #print("waiting to receive", end="")
-        bufLock.release()
-        bufLock.acquire()
+        # bufLock.release() # I don't think I need this
+        # bufLock.acquire() # I don't think I need this 
     count -= 1
     c = cbuffer[getIndex]
     getIndex += 1
     if (getIndex == bufsize):
         getIndex = 0
-    bufLock.release()
+    # bufLock.release() # I don't think I need this
     return c       
 
 
@@ -65,7 +70,7 @@ if len(sys.argv) != 2:
 bufsize = int(sys.argv[1])
 cbuffer = ['x'] * bufsize    # circular buffer; x means uninitialized
 count = putIndex = getIndex = 0
-bufLock = threading.Lock()
+# bufLock = threading.Lock() #  I might not need this
 
 consumer = threading.Thread(target=pumpConsumer)
 consumer.start()
