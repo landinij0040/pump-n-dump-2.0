@@ -4,7 +4,7 @@
 
 import sys, threading, time, asyncio
 
-global count, putIndex,  getIndex, cbuffer, bufLock
+global count, putIndex,  getIndex, cbuffer, bufLock, mutex, empty, full
 
 
 def pumpProducer():
@@ -16,7 +16,7 @@ def pumpProducer():
       
 
 def putChar(character):
-    global count, putIndex, bufLock
+    global count, putIndex, bufLock, mutex, full, empty
     # bufLock.acquire() # TODO: I dont think I need this
     
     
@@ -25,11 +25,14 @@ def putChar(character):
     #     #print("waiting to send", end="")
     #     bufLock.release()
     #     bufLock.acquire()
-    
-    
+    empty.acquire()
+    mutex.acquire()
     count += 1
     cbuffer[putIndex] = character
     putIndex += 1
+    mutex.release()
+    full.release()
+    
     if putIndex == bufsize:
         putIndex = 0
     # bufLock.release() # TODO: I don't I need this
@@ -46,15 +49,22 @@ def pumpConsumer():
         print("")  # newline
 
 def getChar():
-    global count, getIndex, bufLock
+    global count, getIndex, bufLock, mutex, full, empty
     # bufLock.acquire()# TODO: I don't I need this
-    while (count == 0):
+    # TODO: I don't think I need this
+    # while (count == 0):
         #print("waiting to receive", end="")
         # bufLock.release() # I don't think I need this
-        # bufLock.acquire() # I don't think I need this 
+        # bufLock.acquire() # I don't think I need this S
+    
+    full.acquire()
+    mutex.acquire()
     count -= 1
     c = cbuffer[getIndex]
     getIndex += 1
+    mutex.release()
+    empty.release()
+    
     if (getIndex == bufsize):
         getIndex = 0
     # bufLock.release() # I don't think I need this
@@ -67,10 +77,18 @@ if len(sys.argv) != 2:
     print("usage: pump bufferSize")
     exit(1)
 
+
+
+
+
 bufsize = int(sys.argv[1])
 cbuffer = ['x'] * bufsize    # circular buffer; x means uninitialized
 count = putIndex = getIndex = 0
 # bufLock = threading.Lock() #  I might not need this
+
+mutex = asyncio.Semaphore() # The Mutual exclusive semaphore
+empty = asyncio.Semaphore(value = 2) # Indicate that the buffer is empty and is ready to put stuff into it
+full = asyncio.Semaphore()  # Indiate that the buffer is full and is ready to be consummed
 
 consumer = threading.Thread(target=pumpConsumer)
 consumer.start()
