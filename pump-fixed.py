@@ -17,13 +17,16 @@ def pumpProducer():
 
 def putChar(character):
     global count, putIndex, bufLock, mutex, full, empty
+    
     empty.acquire()
-    mutex.acquire()
+    full.acquire()
+    
     count += 1
     cbuffer[putIndex] = character
     putIndex += 1
-    mutex.release()
+    
     full.release()
+    empty.release()
     
     if putIndex == bufsize:
         putIndex = 0
@@ -43,12 +46,14 @@ def pumpConsumer():
 def getChar():
     global count, getIndex, bufLock, mutex, full, empty
     full.acquire()
-    mutex.acquire()
+    empty.acquire()
+    
     count -= 1
     c = cbuffer[getIndex]
     getIndex += 1
-    mutex.release()
+    
     empty.release()
+    full.release()
     
     if (getIndex == bufsize):
         getIndex = 0
