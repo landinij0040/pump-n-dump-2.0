@@ -17,17 +17,7 @@ def pumpProducer():
 
 def putChar(character):
     global count, putIndex, bufLock, mutex, full, empty
-    # print("in the producer") # TODO: Delete
-    # bufLock.acquire() # TODO: I dont think I need this
-    
-    
-    # TODO: I don't think I need this
-    # while count >= bufsize:
-    #     #print("waiting to send", end="")
-    #     bufLock.release()
-    #     bufLock.acquire()
     empty.acquire()
-    # print("prodicer - empty acquire") # TODO: Delete
     mutex.acquire()
     count += 1
     cbuffer[putIndex] = character
@@ -52,15 +42,7 @@ def pumpConsumer():
 
 def getChar():
     global count, getIndex, bufLock, mutex, full, empty
-    # bufLock.acquire()# TODO: I don't I need this
-    # TODO: I don't think I need this
-    # while (count == 0):
-        #print("waiting to receive", end="")
-        # bufLock.release() # I don't think I need this
-        # bufLock.acquire() # I don't think I need this S
-    # print("in consumer") # TODO: Delete Later 
     full.acquire()
-    # print("consumer - acquire") #TODO: delete later 
     mutex.acquire()
     count -= 1
     c = cbuffer[getIndex]
@@ -70,7 +52,6 @@ def getChar():
     
     if (getIndex == bufsize):
         getIndex = 0
-    # bufLock.release() # I don't think I need this
     return c       
 
 
@@ -80,14 +61,9 @@ if len(sys.argv) != 2:
     print("usage: pump bufferSize")
     exit(1)
 
-
-
-
-
 bufsize = int(sys.argv[1])
 cbuffer = ['x'] * bufsize    # circular buffer; x means uninitialized
 count = putIndex = getIndex = 0
-# bufLock = threading.Lock() #  I might not need this
 
 mutex = threading.Semaphore() # The Mutual exclusive semaphore
 empty = threading.Semaphore(value = 2) # Indicate that the buffer is empty and is ready to put stuff into it
